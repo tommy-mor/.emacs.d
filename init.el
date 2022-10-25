@@ -34,6 +34,7 @@
 
 ;(use-package evil-snipe :config (evil-snipe-mode 1) (evil-snipe-override-mode 1))
 
+
 (use-package evil-leader :config
   (global-evil-leader-mode 1)
   
@@ -51,16 +52,13 @@
 	"q" 'recompile ;; kill-this-buffer
 	;;"R" () ;; kill-this-buffer
 	"d" 'kill-this-buffer
-	"g" 'helm-grep-do-git-grep 
+	"g" 'helm-projectile-ag 
 	"e" 'string-edit-at-point
-	"s" 'aya-create
-	"S" 'aya-expand
 	"o" 'helm-occur
-	"l" 'helm-locate
 	"t" 'avy-goto-word-1
-	"p" 'font-lock-fontify-buffer))
+	;;"p" 'font-lock-fontify-buffer
+	"p" 'helm-projectile))
 
-;"p" 'helm-projectile-find-file))
 (use-package evil-surround :config (global-evil-surround-mode 1))
 
 (use-package undo-tree :config
@@ -106,6 +104,8 @@
 (use-package anzu :config (global-anzu-mode 1))
 (use-package expand-region)
 (use-package company)
+(use-package ag)
+(use-package helm-ag)
 (use-package evil-colemak-basics :config (global-evil-colemak-basics-mode 1))
 (use-package exec-path-from-shell :config (exec-path-from-shell-initialize))
 (use-package leuven-theme)
