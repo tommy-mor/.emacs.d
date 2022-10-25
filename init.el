@@ -1,21 +1,27 @@
+;; https://github.crookster.org/switching-to-straight.el-from-emacs-26-builtin-package.el/
+;; https://countvajhula.com/2020/12/27/turn-your-emacs-d-into-an-emacs-distribution-with-straight-el/
 
-(package-initialize)
-(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-(column-number-mode 1)
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 6))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
+(straight-use-package 'use-package)
+(setq straight-use-package-by-default t)
 
 
 (defun revert-buffer-no-confirm ()
   "Revert buffer without confirmation."
   (interactive) (revert-buffer t t))
 
-(require 'package)
-(add-to-list 'package-archives
-			 '("melpa-stable" . "https://melpa.org/packages/") t)
-
-(eval-when-compile ;; Following line is not needed if use-package.el is in ~/.emacs.d (require 'use-palllCKAGE)
-  (require 'use-package))
-
-(setq use-package-always-ensure t)
 
 (use-package avy
   :config
@@ -55,7 +61,7 @@
 	"p" 'font-lock-fontify-buffer))
 
 ;"p" 'helm-projectile-find-file))
-(use-package evil-surround :ensure t :config (global-evil-surround-mode 1))
+(use-package evil-surround :config (global-evil-surround-mode 1))
 
 (use-package undo-tree :config (global-undo-tree-mode) (evil-set-undo-system 'undo-tree))
 (use-package evil-smartparens)
@@ -111,7 +117,7 @@
 
 (windmove-default-keybindings)
 
-(load-theme 'deeper-blue t)
+(load-theme 'leuven t)
 
 (tool-bar-mode -1)
 (menu-bar-mode -1)
@@ -134,6 +140,8 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("c505ae23385324c21821b24c9cc1d68d8da6f3cfb117eb18826d146b8ec01b15" default))
  '(undo-tree-auto-save-history nil)
  '(wakatime-api-key "b93ccd46-94c9-4b96-a195-4e0205b9cc36")
  '(wakatime-cli-path "/home/tommy/go/bin/wakatime-cli")
@@ -183,60 +191,62 @@
 
 (save-place-mode t)
 
-;; TODO copy this..
-(require 'symex)
-
 
 (defun cider-eval-and-replace ()
   (interactive)
   (goto-char (cadr (cider-sexp-at-point 'bounds)))
   (cider-eval-last-sexp-and-replace))
 
-(setq symex--user-evil-keyspec
-	  '((":" . evil-ex)
-		("l" . evil-undo)
-		
-		("h" . symex-go-down)
-		("n" . symex-go-forward)
-		("e" . symex-go-backward)
-		("i" . symex-go-up)
+(use-package symex
+  :straight
+  (symex :local-repo "~/programming/clones/symex.el" :type git)
+  :custom
+  (symex-modal-backend 'evil)
+  :config
+  (setq symex--user-evil-keyspec
+		'((":" . evil-ex)
+		  ("l" . evil-undo)
+		  
+		  ("h" . symex-go-down)
+		  ("n" . symex-go-forward)
+		  ("e" . symex-go-backward)
+		  ("i" . symex-go-up)
 
-		("C-e" . symex-leap-backward)
-		("C-n" . symex-leap-forward)
-		
-		("H" . paredit-raise-sexp)
-		("N" . symex-shift-forward)
-		("E" . symex-shift-backward)
-		("I" . symex-wrap)
+		  ("C-e" . symex-leap-backward)
+		  ("C-n" . symex-leap-forward)
+		  
+		  ("H" . paredit-raise-sexp)
+		  ("N" . symex-shift-forward)
+		  ("E" . symex-shift-backward)
+		  ("I" . symex-wrap)
 
-		("w" . symex-traverse-forward)
-		("W" . symex-wrap)
-		
-		
-		("C-h" . symex-climb-branch)
-		("C-I" . symex-descend-branch)
-		("M-i" . symex-goto-highest)
-		("M-h" . symex-goto-lowest)
-		("M-n" . symex-evaluate)
-		("M-d" . cider-doc)
-		("M-N" . cider-eval-and-replace)))
+		  ("w" . symex-traverse-forward)
+		  ("W" . symex-wrap)
+		  
+		  
+		  ("C-h" . symex-climb-branch)
+		  ("C-I" . symex-descend-branch)
+		  ("M-i" . symex-goto-highest)
+		  ("M-h" . symex-goto-lowest)
+		  ("M-n" . symex-evaluate)
+		  ("M-d" . cider-doc)
+		  ("M-N" . cider-eval-and-replace)))
+  (symex-initialize)
+  (evil-define-key 'insert symex-mode-map
+	(kbd "<escape>") 'symex-mode-interface)
+
+  (evil-define-key 'normal symex-mode-map
+	(kbd "<escape>") 'symex-mode-interface))
 
 
-(symex-initialize)
-(global-set-key (kbd "s-;") 'symex-mode-interface)
 
-(setq symex-modal-backend 'evil)
 
-(evil-define-key 'insert symex-mode-map
-  (kbd "<escape>") 'symex-mode-interface)
 
-(evil-define-key 'normal symex-mode-map
-  (kbd "<escape>") 'symex-mode-interface)
 
 
 (use-package cider)
 
-; (load "$HOME/.lisp.el")
+										; (load "$HOME/.lisp.el")
 (setq line-number-mode t)
 (setq column-number-mode t)
 (setq visible-bell t)
@@ -244,7 +254,7 @@
 (setq default-major-mode 'text-mode)
 
 (setq text-mode-hook
-      '(lambda () (auto-fill-mode 1)))
+	  '(lambda () (auto-fill-mode 1)))
 
 (add-hook 'text-mode 'turn-on-auto-fill)
 
