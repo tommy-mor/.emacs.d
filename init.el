@@ -63,7 +63,20 @@
 ;"p" 'helm-projectile-find-file))
 (use-package evil-surround :config (global-evil-surround-mode 1))
 
-(use-package undo-tree :config (global-undo-tree-mode) (evil-set-undo-system 'undo-tree))
+(use-package undo-tree :config
+  (global-undo-tree-mode 1)
+  (evil-set-undo-system 'undo-tree))
+
+(setq evil-normal-state-tag   (propertize " COMMAND " 'face '((:background "dark khaki" :foreground "black")))
+	  evil-emacs-state-tag    (propertize "  EMACS  " 'face '((:background "turquoise" :foreground "black")))
+	  evil-insert-state-tag   (propertize " ------- " 'face '((:background "dark sea green" :foreground "black")))
+	  evil-replace-state-tag  (propertize " REPLACE " 'face '((:background "dark orange" :foreground "black")))
+	  evil-motion-state-tag   (propertize "  MOTION " 'face '((:background "khaki" :foreground "black")))
+	  evil-visual-state-tag   (propertize "  VISUAL " 'face '((:background "light salmon" :foreground "black")))
+	  evil-operator-state-tag (propertize " OPERATE " 'face '((:background "sandy brown" :foreground "black")))
+	  evil-symex-state-tag    (propertize "  SYMEX  " 'face '((:background "purple" :foreground "black"))))
+
+
 (use-package evil-smartparens)
 (use-package smartparens :config
   (smartparens-global-mode 1)
@@ -87,17 +100,18 @@
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
 
+
+;; small modes
+(use-package hl-todo :config (global-hl-todo-mode 1))
+(use-package anzu :config (global-anzu-mode 1))
 (use-package expand-region)
 (use-package company)
-(use-package evil-colemak-basics
-  :config
-  (global-evil-colemak-basics-mode 1))
-
+(use-package evil-colemak-basics :config (global-evil-colemak-basics-mode 1))
 (use-package exec-path-from-shell :config (exec-path-from-shell-initialize))
 (use-package leuven-theme)
-;; (use-package wakatime-mode
-;;   :config
-;;   (global-wakatime-mode 1))
+(use-package wakatime-mode
+  :config
+  (global-wakatime-mode 1))
 
 
 
@@ -124,8 +138,8 @@
 
 (global-hl-line-mode 0)
 
-(show-paren-mode 1)
 (setq show-paren-delay 0)
+(show-paren-mode 1)
 
 ;; aligns annotation to the right hand side
 (setq company-tooltip-align-annotations t)
@@ -134,6 +148,7 @@
 
 (use-package leuven-theme)
 
+(pixel-scroll-precision-mode)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
