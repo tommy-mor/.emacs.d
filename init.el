@@ -106,6 +106,7 @@
 (use-package company)
 (use-package ag)
 (use-package helm-ag)
+(use-package go-mode)
 (use-package evil-colemak-basics :config (global-evil-colemak-basics-mode 1))
 (use-package exec-path-from-shell :config (exec-path-from-shell-initialize))
 (use-package leuven-theme)
@@ -150,6 +151,8 @@
 
 (pixel-scroll-precision-mode)
 
+(setq initial-buffer-choice "~/programming/tdsl/test/todo.tdsl")
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -157,9 +160,45 @@
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    '("c505ae23385324c21821b24c9cc1d68d8da6f3cfb117eb18826d146b8ec01b15" default))
+ '(safe-local-variable-values
+   '((eval progn
+		   (local-set-key
+			(kbd "C-c C-r")
+			(lambda nil
+			  (interactive)
+			  (cider-interactive-eval "(main-default)" nil nil
+									  (cider--nrepl-pr-request-map)))))
+	 (eval progn
+		   (local-set-key
+			(kbd "C-c C-r")
+			(lambda nil
+			  (interactive)
+			  (cider-interactive-eval "(require 'development) (in-ns 'development) (restart)" nil nil
+									  (cider--nrepl-pr-request-map)))))
+	 (eval progn
+		   (local-set-key
+			(kbd "C-c C-r")
+			(lambda nil
+			  (interactive)
+			  (cider-interactive-eval "(in-ns 'development) (restart)" nil nil
+									  (cider--nrepl-pr-request-map)))))
+	 (eval progn
+		   (local-set-key
+			(kbd "C-c C-r")
+			(lambda nil
+			  (interactive)
+			  (cider-interactive-eval "(+ 3 3)" nil nil
+									  (cider--nrepl-pr-request-map)))))
+	 (eval progn
+		   (local-set-key
+			(kbd "C-c C-c")
+			(lambda nil
+			  (interactive)
+			  (cider-interactive-eval "(+ 3 3)" nil nil
+									  (cider--nrepl-pr-request-map)))))))
  '(undo-tree-auto-save-history nil)
  '(wakatime-api-key "b93ccd46-94c9-4b96-a195-4e0205b9cc36")
- '(wakatime-cli-path "/home/tommy/go/bin/wakatime-cli")
+ '(wakatime-cli-path "/home/tommy/programming/keep-linear/wakatime-wrapper.clj")
  '(warning-suppress-types '((comp))))
 
 (custom-set-faces
@@ -283,3 +322,19 @@
   (dired "/ssh:root@143.198.100.76:/"))
 
 (setq nrepl-use-ssh-fallback-for-remote-hosts t)
+
+(use-package copilot
+  :straight (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el"))
+  :ensure t
+  :config
+  (setq copilot-node-executable "/home/tommy/.nvm/versions/node/v17.9.1/bin/node"))
+
+(with-eval-after-load 'company
+  ;; disable inline previews
+  (delq 'company-preview-if-just-one-frontend company-frontends))
+
+
+(define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
+
+
