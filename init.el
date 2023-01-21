@@ -16,6 +16,9 @@
 
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
+(scroll-bar-mode -1)
+
+
 
 
 (defun revert-buffer-no-confirm ()
@@ -120,7 +123,7 @@
 
 (setq backup-directory-alist '(("" . "~/.emacs.d/emacs-backup")))
 
-(global-linum-mode 1)
+(global-display-line-numbers-mode 1)
 
 (setq ring-bell-function 'ignore)
 
@@ -145,7 +148,11 @@
 ;; aligns annotation to the right hand side
 (setq company-tooltip-align-annotations t)
 
-(use-package clojure-mode)
+(use-package flycheck-clj-kondo)
+(use-package clojure-mode
+  :config
+  (require 'flycheck-clj-kondo))
+
 
 (use-package leuven-theme)
 
