@@ -156,17 +156,17 @@
 
 (use-package leuven-theme)
 
-(pixel-scroll-precision-mode)
 
-(setq initial-buffer-choice "~/programming/tdsl/test/todo.tdsl")
+;; (setq initial-buffer-choice "~/programming/tdsl/test/todo.tdsl")
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(cider-merge-sessions 'project)
  '(custom-safe-themes
-   '("c505ae23385324c21821b24c9cc1d68d8da6f3cfb117eb18826d146b8ec01b15" default))
+   '("474513bacf33a439da7b9a5df1dd11a277929d8480752675fc7d5f3816d8fdef" "c505ae23385324c21821b24c9cc1d68d8da6f3cfb117eb18826d146b8ec01b15" default))
  '(safe-local-variable-values
    '((eval progn
 		   (local-set-key
@@ -205,7 +205,6 @@
 									  (cider--nrepl-pr-request-map)))))))
  '(undo-tree-auto-save-history nil)
  '(wakatime-api-key "b93ccd46-94c9-4b96-a195-4e0205b9cc36")
- '(wakatime-cli-path "/home/tommy/programming/keep-linear/wakatime-wrapper.clj")
  '(warning-suppress-types '((comp))))
 
 (custom-set-faces
@@ -258,6 +257,8 @@
   (goto-char (cadr (cider-sexp-at-point 'bounds)))
   (cider-eval-last-sexp-and-replace))
 
+(load-file "~/programming/examplegarden/bind.el")
+
 (use-package symex
   :straight
   (symex :local-repo "~/programming/clones/symex.el" :type git)
@@ -291,7 +292,8 @@
 		  ("M-h" . symex-goto-lowest)
 		  ("M-n" . symex-evaluate)
 		  ("M-d" . cider-doc)
-		  ("M-N" . cider-eval-and-replace)))
+		  ("M-N" . cider-eval-and-replace)
+		  ("D" . cider-eval-recalling)))
   (symex-initialize)
   (evil-define-key 'insert symex-mode-map
 	(kbd "<escape>") 'symex-mode-interface)
@@ -306,6 +308,7 @@
 
 
 (use-package cider)
+
 
 										; (load "$HOME/.lisp.el")
 (setq line-number-mode t)
@@ -324,24 +327,22 @@
   (require 'atomic-chrome)
   (atomic-chrome-start-server))
 
-(defun connect-remote ()
-  (interactive)
-  (dired "/ssh:root@143.198.100.76:/"))
-
-(setq nrepl-use-ssh-fallback-for-remote-hosts t)
-
 (use-package copilot
   :straight (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el"))
   :ensure t
-  :config
-  (setq copilot-node-executable "/home/tommy/.nvm/versions/node/v17.9.1/bin/node"))
+  ;; :config
+  ;; (setq copilot-node-executable "/home/tommy/.nvm/versions/node/v17.9.1/bin/node")
+  )
 
 (with-eval-after-load 'company
   ;; disable inline previews
   (delq 'company-preview-if-just-one-frontend company-frontends))
 
-
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
+
+(byte-recompile-directory (expand-file-name "~/.emacs.d/straight/build/symex") 0)
+
+
 
 
