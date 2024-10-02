@@ -44,6 +44,7 @@
   (evil-leader/set-leader ",")
   (evil-leader/set-key
 	"f" 'helm-find-files
+	"F" 'fzf-projectile
 	"b" 'helm-mini
 	"k" 'helm-show-kill-ring
 	"a" 'company-mode
@@ -109,13 +110,31 @@
 (use-package company)
 (use-package ag)
 (use-package helm-ag)
+(use-package neotree
+  :config
+  (global-set-key [f8] 'neotree-toggle))
 (use-package go-mode)
 (use-package evil-colemak-basics :config (global-evil-colemak-basics-mode 1))
 (use-package exec-path-from-shell :config (exec-path-from-shell-initialize))
 (use-package leuven-theme)
+(use-package terraform-mode)
 (use-package wakatime-mode
   :config
   (global-wakatime-mode 1))
+
+(use-package fzf
+  ;; Don't forget to set keybinds!
+  :config
+  (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll"
+        fzf/executable "fzf"
+        fzf/git-grep-args "-i --line-number %s"
+        ;; command used for `fzf-grep-*` functions
+        ;; example usage for ripgrep:
+        ;; fzf/grep-command "rg --no-heading -nH"
+        fzf/grep-command "grep -nrH"
+        ;; If nil, the fzf buffer will appear at the top of the window
+        fzf/position-bottom t
+        fzf/window-height 15))
 
 
 
@@ -168,7 +187,16 @@
  '(custom-safe-themes
    '("474513bacf33a439da7b9a5df1dd11a277929d8480752675fc7d5f3816d8fdef" "c505ae23385324c21821b24c9cc1d68d8da6f3cfb117eb18826d146b8ec01b15" default))
  '(safe-local-variable-values
-   '((eval progn
+   '((c-default-style quote
+					  ((java-mode "Rama")))
+	 (eval when
+		   (featurep 'rama-java-style)
+		   (rama-set-java-style)
+		   (c-set-style "Rama"))
+	 (eval when
+		   (featurep 'rama-mode)
+		   (rama-mode))
+	 (eval progn
 		   (local-set-key
 			(kbd "C-c C-r")
 			(lambda nil
@@ -257,7 +285,7 @@
   (goto-char (cadr (cider-sexp-at-point 'bounds)))
   (cider-eval-last-sexp-and-replace))
 
-(load-file "~/programming/examplegarden/bind.el")
+;; (load-file "~/programming/examplegarden/bind.el")
 
 (use-package symex
   :straight
