@@ -1,6 +1,8 @@
 ;; https://github.crookster.org/switching-to-straight.el-from-emacs-26-builtin-package.el/
 ;; https://countvajhula.com/2020/12/27/turn-your-emacs-d-into-an-emacs-distribution-with-straight-el/
 
+(message "i am loading my ~/.emacs.d/init.el")
+
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -44,7 +46,6 @@
   (evil-leader/set-leader ",")
   (evil-leader/set-key
 	"f" 'helm-find-files
-	"F" 'fzf-projectile
 	"b" 'helm-mini
 	"k" 'helm-show-kill-ring
 	"a" 'company-mode
@@ -110,31 +111,11 @@
 (use-package company)
 (use-package ag)
 (use-package helm-ag)
-(use-package neotree
-  :config
-  (global-set-key [f8] 'neotree-toggle))
 (use-package go-mode)
 (use-package evil-colemak-basics :config (global-evil-colemak-basics-mode 1))
 (use-package exec-path-from-shell :config (exec-path-from-shell-initialize))
 (use-package leuven-theme)
-(use-package terraform-mode)
-(use-package wakatime-mode
-  :config
-  (global-wakatime-mode 1))
-
-(use-package fzf
-  ;; Don't forget to set keybinds!
-  :config
-  (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll"
-        fzf/executable "fzf"
-        fzf/git-grep-args "-i --line-number %s"
-        ;; command used for `fzf-grep-*` functions
-        ;; example usage for ripgrep:
-        ;; fzf/grep-command "rg --no-heading -nH"
-        fzf/grep-command "grep -nrH"
-        ;; If nil, the fzf buffer will appear at the top of the window
-        fzf/position-bottom t
-        fzf/window-height 15))
+(use-package wakatime-mode :config (global-wakatime-mode 1))
 
 
 
@@ -143,7 +124,6 @@
 (setq backup-directory-alist '(("" . "~/.emacs.d/emacs-backup")))
 
 (global-display-line-numbers-mode 1)
-
 (setq ring-bell-function 'ignore)
 
 (blink-cursor-mode 0)
@@ -160,6 +140,8 @@
 (menu-bar-mode -1)
 
 (global-hl-line-mode 0)
+
+(setq nrepl-use-ssh-fallback-for-remote-hosts 't)
 
 (setq show-paren-delay 0)
 (show-paren-mode 1)
@@ -185,18 +167,9 @@
  ;; If there is more than one, they won't work right.
  '(cider-merge-sessions 'project)
  '(custom-safe-themes
-   '("474513bacf33a439da7b9a5df1dd11a277929d8480752675fc7d5f3816d8fdef" "c505ae23385324c21821b24c9cc1d68d8da6f3cfb117eb18826d146b8ec01b15" default))
+   '("cfe4d36ed4cf00a541f7ba0deb38c94808c13a3e4c717f07bc3b9c866670e8d1" "474513bacf33a439da7b9a5df1dd11a277929d8480752675fc7d5f3816d8fdef" "c505ae23385324c21821b24c9cc1d68d8da6f3cfb117eb18826d146b8ec01b15" default))
  '(safe-local-variable-values
-   '((c-default-style quote
-					  ((java-mode "Rama")))
-	 (eval when
-		   (featurep 'rama-java-style)
-		   (rama-set-java-style)
-		   (c-set-style "Rama"))
-	 (eval when
-		   (featurep 'rama-mode)
-		   (rama-mode))
-	 (eval progn
+   '((eval progn
 		   (local-set-key
 			(kbd "C-c C-r")
 			(lambda nil
@@ -233,7 +206,7 @@
 									  (cider--nrepl-pr-request-map)))))))
  '(undo-tree-auto-save-history nil)
  '(wakatime-api-key "b93ccd46-94c9-4b96-a195-4e0205b9cc36")
- '(warning-suppress-types '((comp))))
+ '(warning-suppress-types '((use-package) (comp))))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -285,49 +258,136 @@
   (goto-char (cadr (cider-sexp-at-point 'bounds)))
   (cider-eval-last-sexp-and-replace))
 
-;; (load-file "~/programming/examplegarden/bind.el")
+(defun cider-eval-recalling (&optional debug-it)
+  (interactive "P")
+  (let ((inline-debug (eq 16 (car-safe debug-it)))
+		(thing-to-send (concat "(clojure.test/run-test-var #'" (cider-symbol-at-point) ")") ) )
+	(cider-interactive-eval
+	 thing-to-send
+	 nil
+	 (cider-defun-at-point 'bounds)
+	 (cider--nrepl-pr-request-map))))
+
+
+;(load-file "~/programming/examplegarden/bind.el")
+(use-package symex-core
+  :straight
+  (symex-core
+   :local-repo "~/programming/symex.el"
+   :type git
+   :files ("symex-core/symex*.el")))
 
 (use-package symex
+  :after (symex-core)
   :straight
-  (symex :local-repo "~/programming/clones/symex.el" :type git)
-  :custom
-  (symex-modal-backend 'evil)
+  (symex
+   :local-repo "~/programming/symex.el"
+   :type git
+   :files ("symex/symex*.el" "symex/doc/*.texi" "symex/doc/figures"))
   :config
-  (setq symex--user-evil-keyspec
-		'((":" . evil-ex)
-		  ("l" . evil-undo)
-		  
-		  ("h" . symex-go-down)
-		  ("n" . symex-go-forward)
-		  ("e" . symex-go-backward)
-		  ("i" . symex-go-up)
+  (symex-mode 1)
+  (global-set-key (kbd "s-;") #'symex-mode-interface)) ;
 
-		  ("C-e" . symex-leap-backward)
-		  ("C-n" . symex-leap-forward)
-		  
-		  ("H" . paredit-raise-sexp)
-		  ("N" . symex-shift-forward)
-		  ("E" . symex-shift-backward)
-		  ("I" . symex-wrap)
+(use-package symex-evil
+  :after (symex evil)
+  :straight
+  (symex-evil
+   :type git
+   :local-repo "~/programming/symex.el"
+   :files ("symex-evil/symex*.el"))
+  :config
+  (symex-evil-mode 1))
 
-		  ("w" . symex-traverse-forward)
-		  ("W" . symex-wrap)
-		  
-		  
-		  ("C-h" . symex-climb-branch)
-		  ("C-I" . symex-descend-branch)
-		  ("M-i" . symex-goto-highest)
-		  ("M-h" . symex-goto-lowest)
-		  ("M-n" . symex-evaluate)
-		  ("M-d" . cider-doc)
-		  ("M-N" . cider-eval-and-replace)
-		  ("D" . cider-eval-recalling)))
-  (symex-initialize)
-  (evil-define-key 'insert symex-mode-map
-	(kbd "<escape>") 'symex-mode-interface)
+(use-package symex-ide
+  :after (symex)
+  :straight
+  (symex-ide
+   :type git
 
-  (evil-define-key 'normal symex-mode-map
-	(kbd "<escape>") 'symex-mode-interface))
+   :local-repo "~/programming/symex.el"
+   :files ("symex-ide/symex*.el"))
+  :config
+  (symex-ide-mode 1))
+
+
+
+
+
+;; Place this in your init.el or equivalent config file
+(eval-after-load 'symex
+  '(progn
+	 (lithium-define-keys symex-editing-mode
+       ;; Bind 'u' to the command, and crucially, add the :exit flag.
+       (("u" symex-insert-at-beginning :exit)))
+	 
+	 ;; Unbind the default Symex navigation keys that you are replacing.
+     ;; This prevents the default 'h', 'j', 'k', 'l' from also being active.
+	 (define-key symex-editing-mode-map (kbd "h") nil)
+	 (define-key symex-editing-mode-map (kbd "j") nil)
+	 (define-key symex-editing-mode-map (kbd "k") nil)
+	 (define-key symex-editing-mode-map (kbd "l") nil)
+	 
+
+     ;; --- Your Custom Keybindings ---
+     ;; This section maps your preferred keys to the Symex commands.
+
+     ;; Basic Evil and Navigation
+	 (define-key symex-editing-mode-map (kbd ":") #'evil-ex)
+     ;; "l" is not a standard evil command for undo, but respecting your config.
+     ;; The standard is "u". If you meant "u", you can change it here.
+	 (define-key symex-editing-mode-map (kbd "l") #'evil-undo)
+
+     ;; Your Colemak Navigation (hnei)
+	 (define-key symex-editing-mode-map (kbd "h") #'symex-go-down)
+	 (define-key symex-editing-mode-map (kbd "n") #'symex-go-forward)
+	 (define-key symex-editing-mode-map (kbd "e") #'symex-go-backward)
+	 (define-key symex-editing-mode-map (kbd "i") #'symex-go-up)
+	 
+	 ;; Leaping
+	 (define-key symex-editing-mode-map (kbd "C-e") #'symex-leap-backward)
+	 
+	 (define-key symex-editing-mode-map (kbd "C-n") #'symex-leap-forward)
+
+     ;; Structural Manipulation
+	 (define-key symex-editing-mode-map (kbd "H") #'symex-raise) ; Note: paredit-raise-sexp is now symex-raise
+	 (define-key symex-editing-mode-map (kbd "N") #'symex-shift-forward)
+	 (define-key symex-editing-mode-map (kbd "E") #'symex-shift-backward)
+	 (define-key symex-editing-mode-map (kbd "I") #'symex-wrap)
+
+     ;; Traversal and Wrapping
+	 (define-key symex-editing-mode-map (kbd "w") #'symex-traverse-forward)
+	 (define-key symex-editing-mode-map (kbd "W") #'symex-wrap)
+
+     ;; Branch Navigation
+	 (define-key symex-editing-mode-map (kbd "C-h") #'symex-climb-branch)
+	 (define-key symex-editing-mode-map (kbd "C-I") #'symex-descend-branch) ; Assuming uppercase I
+	 (define-key symex-editing-mode-map (kbd "M-i") #'symex-goto-highest)
+	 (define-key symex-editing-mode-map (kbd "M-h") #'symex-goto-lowest)
+
+     ;; IDE / Evaluation Commands
+	 (define-key symex-editing-mode-map (kbd "M-n") #'symex-evaluate)
+	 (define-key symex-editing-mode-map (kbd "M-d") #'symex-describe) ; Note: This calls the generic symex-describe
+
+     ;; IMPORTANT: These two Cider functions may have been removed or renamed in
+     ;; recent versions of Cider. The common function now is `cider-eval-last-sexp-and-replace`.
+     ;; If these bindings cause an error, you may need to update them.
+     ;; (define-key symex-editing-mode-map (kbd "M-N") #'cider-eval-and-replace)
+     ;; (define-key symex-editing-mode-map (kbd "D")   #'cider-eval-recalling)
+     ))
+
+
+(eval-after-load 'evil
+  '(progn
+     (message "Binding <escape> in normal mode to launch Symex...")
+     (define-key evil-normal-state-map (kbd "<escape>") #'symex-mode-interface)
+	 (define-key evil-insert-state-map (kbd "<escape>") #'symex-mode-interface)
+	 
+	 
+	 ))
+
+
+
+(setenv "OPENROUTER_API_KEY" "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")
 
 
 
