@@ -387,13 +387,6 @@
 
 
 
-(setenv "OPENROUTER_API_KEY" "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")
-
-
-
-
-
-
 
 (use-package cider)
 
