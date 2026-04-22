@@ -28,6 +28,14 @@
 
 
 
+(defun my-cycle-buffer ()
+  (interactive)
+  (next-buffer)
+  (set-transient-map
+   (let ((map (make-sparse-keymap)))
+     (define-key map (kbd "TAB") #'my-cycle-buffer)
+     map)))
+
 (defun revert-buffer-no-confirm ()
   "Revert buffer without confirmation."
   (interactive) (revert-buffer t t))
@@ -250,6 +258,84 @@
 	 (cider--nrepl-pr-request-map))))
 
 
+(use-package symex-core
+  :straight
+  (symex-core
+   :host github
+   :repo "drym-org/symex.el"
+   :files ("symex-core/symex*.el")))
+
+(use-package symex
+  :after (symex-core)
+  :straight
+  (symex
+   :host github
+   :repo "drym-org/symex.el"
+   :files ("symex/symex*.el" "symex/doc/*.texi" "symex/doc/figures"))
+  :config
+  (symex-mode 1)
+  (global-set-key (kbd "s-;") #'symex-mode-interface))
+
+(use-package symex-ide
+  :after (symex)
+  :straight
+  (symex-ide
+   :host github
+   :repo "drym-org/symex.el"
+   :files ("symex-ide/symex*.el"))
+  :config
+  (symex-ide-mode 1))
+
+(use-package symex-evil
+  :after (symex evil)
+  :straight
+  (symex-evil
+   :host github
+   :repo "drym-org/symex.el"
+   :files ("symex-evil/symex*.el"))
+  :config
+  (symex-evil-mode 1))
+
+(with-eval-after-load 'symex
+  (define-key symex-editing-mode-map (kbd "<escape>") #'evil-normal-state)
+
+  (define-key symex-editing-mode-map (kbd ":") #'evil-ex)
+  (define-key symex-editing-mode-map (kbd "u") #'evil-insert-state)
+  (define-key symex-editing-mode-map (kbd "l") #'evil-undo)
+
+  (define-key symex-editing-mode-map (kbd "h") #'symex-go-down)
+  (define-key symex-editing-mode-map (kbd "n") #'symex-go-forward)
+  (define-key symex-editing-mode-map (kbd "e") #'symex-go-backward)
+  (define-key symex-editing-mode-map (kbd "i") #'symex-go-up)
+
+  (define-key symex-editing-mode-map (kbd "C-e") #'symex-leap-backward)
+  (define-key symex-editing-mode-map (kbd "C-n") #'symex-leap-forward)
+
+  (define-key symex-editing-mode-map (kbd "H") #'paredit-raise-sexp)
+  (define-key symex-editing-mode-map (kbd "N") #'symex-shift-forward)
+  (define-key symex-editing-mode-map (kbd "E") #'symex-shift-backward)
+  (define-key symex-editing-mode-map (kbd "I") #'symex-wrap)
+
+  (define-key symex-editing-mode-map (kbd "w") #'symex-traverse-forward)
+  (define-key symex-editing-mode-map (kbd "W") #'symex-wrap)
+
+  (define-key symex-editing-mode-map (kbd "C-h") #'symex-climb-branch)
+  (define-key symex-editing-mode-map (kbd "C-I") #'symex-descend-branch)
+  (define-key symex-editing-mode-map (kbd "M-i") #'symex-goto-highest)
+  (define-key symex-editing-mode-map (kbd "M-h") #'symex-goto-lowest)
+  (define-key symex-editing-mode-map (kbd "M-n") #'symex-evaluate)
+  (define-key symex-editing-mode-map (kbd "M-d") #'cider-doc)
+  (define-key symex-editing-mode-map (kbd "M-N") #'cider-eval-and-replace)
+  (define-key symex-editing-mode-map (kbd "D") #'cider-eval-recalling))
+
+(with-eval-after-load 'evil
+  (define-key evil-insert-state-map (kbd "<escape>")
+    (lambda ()
+      (interactive)
+      (if (bound-and-true-p symex-mode)
+          (symex-mode-interface)
+        (evil-normal-state)))))
+
 ;(load-file "~/programming/examplegarden/bind.el")
 										;
 (use-package cider)
@@ -286,7 +372,7 @@
   (define-key my-comma-map (kbd "b") #'helm-mini)
   (define-key my-comma-map (kbd "k") #'helm-show-kill-ring)
   (define-key my-comma-map (kbd "a") #'company-mode)
-  (define-key my-comma-map (kbd "\t") #'mode-line-other-buffer)
+  (define-key my-comma-map (kbd "TAB") #'my-cycle-buffer)
   (define-key my-comma-map (kbd "v") #'er/expand-region)
   (define-key my-comma-map (kbd "c") #'comment-region)
   (define-key my-comma-map (kbd "r") #'revert-buffer-no-confirm)
@@ -298,47 +384,5 @@
   (define-key my-comma-map (kbd "t") #'avy-goto-word-1)
   (define-key my-comma-map (kbd "p") #'helm-projectile))
 
-
-(use-package symex
-  :straight
-  (symex :local-repo "~/programming/clones/symex.el" :type git)
-  :custom
-  (symex-modal-backend 'evil)
-  :config
-  (setq symex--user-evil-keyspec
-		'((":" . evil-ex)
-		  ("l" . evil-undo)
-		  
-		  ("h" . symex-go-down)
-		  ("n" . symex-go-forward)
-		  ("e" . symex-go-backward)
-		  ("i" . symex-go-up)
-
-		  ("C-e" . symex-leap-backward)
-		  ("C-n" . symex-leap-forward)
-		  
-		  ("H" . paredit-raise-sexp)
-		  ("N" . symex-shift-forward)
-		  ("E" . symex-shift-backward)
-		  ("I" . symex-wrap)
-
-		  ("w" . symex-traverse-forward)
-		  ("W" . symex-wrap)
-		  
-		  
-		  ("C-h" . symex-climb-branch)
-		  ("C-I" . symex-descend-branch)
-		  ("M-i" . symex-goto-highest)
-		  ("M-h" . symex-goto-lowest)
-		  ("M-n" . symex-evaluate)
-		  ("M-d" . cider-doc)
-		  ("M-N" . cider-eval-and-replace)
-		  ("D" . cider-eval-recalling)))
-  (symex-initialize)
-  (evil-define-key 'insert symex-mode-map
-	(kbd "<escape>") 'symex-mode-interface)
-
-  (evil-define-key 'normal symex-mode-map
-	(kbd "<escape>") 'symex-mode-interface))
 
 
