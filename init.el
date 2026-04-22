@@ -1,6 +1,8 @@
 ;; https://github.crookster.org/switching-to-straight.el-from-emacs-26-builtin-package.el/
 ;; https://countvajhula.com/2020/12/27/turn-your-emacs-d-into-an-emacs-distribution-with-straight-el/
 
+(message "i am loading my ~/.emacs.d/init.el")
+
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -18,6 +20,11 @@
 (setq straight-use-package-by-default t)
 (scroll-bar-mode -1)
 
+(use-package paredit)
+(use-package pubsub)
+(use-package mantra)
+(use-package repeat-ring)
+(use-package evil)
 
 
 
@@ -32,35 +39,9 @@
 
 (use-package evil
   :config
-  (evil-mode 1)
-  (define-key evil-normal-state-map (kbd "<esc>") ()))
-
-;(use-package evil-snipe :config (evil-snipe-mode 1) (evil-snipe-override-mode 1))
+  (evil-mode 1)) ;
 
 
-(use-package evil-leader :config
-  (global-evil-leader-mode 1)
-  
-  (evil-leader/set-leader ",")
-  (evil-leader/set-key
-	"f" 'helm-find-files
-	"b" 'helm-mini
-	"k" 'helm-show-kill-ring
-	"a" 'company-mode
-	;; TODO have evil leader with hold comma, then press tab stuff
-	"TAB" 'mode-line-other-buffer
-	"v" 'er/expand-region
-	"c" 'comment-region
-	"r" 'revert-buffer-no-confirm
-	"q" 'recompile ;; kill-this-buffer
-	;;"R" () ;; kill-this-buffer
-	"d" 'kill-this-buffer
-	"g" 'helm-projectile-ag 
-	"e" 'string-edit-at-point
-	"o" 'helm-occur
-	"t" 'avy-goto-word-1
-	;;"p" 'font-lock-fontify-buffer
-	"p" 'helm-projectile))
 
 (use-package evil-surround :config (global-evil-surround-mode 1))
 
@@ -75,7 +56,7 @@
 	  evil-motion-state-tag   (propertize "  MOTION " 'face '((:background "khaki" :foreground "black")))
 	  evil-visual-state-tag   (propertize "  VISUAL " 'face '((:background "light salmon" :foreground "black")))
 	  evil-operator-state-tag (propertize " OPERATE " 'face '((:background "sandy brown" :foreground "black")))
-	  evil-symex-state-tag    (propertize "  SYMEX  " 'face '((:background "purple" :foreground "black"))))
+	)
 
 
 (use-package evil-smartparens)
@@ -113,9 +94,7 @@
 (use-package evil-colemak-basics :config (global-evil-colemak-basics-mode 1))
 (use-package exec-path-from-shell :config (exec-path-from-shell-initialize))
 (use-package leuven-theme)
-(use-package wakatime-mode
-  :config
-  (global-wakatime-mode 1))
+(use-package wakatime-mode :config (global-wakatime-mode 1))
 
 
 
@@ -124,7 +103,6 @@
 (setq backup-directory-alist '(("" . "~/.emacs.d/emacs-backup")))
 
 (global-display-line-numbers-mode 1)
-
 (setq ring-bell-function 'ignore)
 
 (blink-cursor-mode 0)
@@ -133,14 +111,17 @@
 
 (setq indent-tabs-mode 1)
 
+
 (windmove-default-keybindings)
 
-(load-theme 'leuven t)
 
+(load-theme 'leuven t)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 
 (global-hl-line-mode 0)
+
+(setq nrepl-use-ssh-fallback-for-remote-hosts 't)
 
 (setq show-paren-delay 0)
 (show-paren-mode 1)
@@ -166,7 +147,7 @@
  ;; If there is more than one, they won't work right.
  '(cider-merge-sessions 'project)
  '(custom-safe-themes
-   '("474513bacf33a439da7b9a5df1dd11a277929d8480752675fc7d5f3816d8fdef" "c505ae23385324c21821b24c9cc1d68d8da6f3cfb117eb18826d146b8ec01b15" default))
+   '("cfe4d36ed4cf00a541f7ba0deb38c94808c13a3e4c717f07bc3b9c866670e8d1" "474513bacf33a439da7b9a5df1dd11a277929d8480752675fc7d5f3816d8fdef" "c505ae23385324c21821b24c9cc1d68d8da6f3cfb117eb18826d146b8ec01b15" default))
  '(safe-local-variable-values
    '((eval progn
 		   (local-set-key
@@ -205,7 +186,7 @@
 									  (cider--nrepl-pr-request-map)))))))
  '(undo-tree-auto-save-history nil)
  '(wakatime-api-key "b93ccd46-94c9-4b96-a195-4e0205b9cc36")
- '(warning-suppress-types '((comp))))
+ '(warning-suppress-types '((use-package) (comp))))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -227,7 +208,7 @@
 
 (defun scroll-up-half ()
   (interactive)
-  (scroll-up (window-half-height))) 
+  (scroll-up (window-half-height)))
 
 (defun scroll-down-half ()         
   (interactive)                    
@@ -246,8 +227,9 @@
 (setq er/try-expand-list (append er/try-expand-list
 								 '(tree-sitter-mark-bigger-node)))
 
-; (load-file "~/.emacs.d/treenav.el")
+										; (load-file "~/.emacs.d/treenav.el")
 (setq undo-tree-visualizer-diff nil)
+
 
 (save-place-mode t)
 
@@ -257,56 +239,19 @@
   (goto-char (cadr (cider-sexp-at-point 'bounds)))
   (cider-eval-last-sexp-and-replace))
 
-(load-file "~/programming/examplegarden/bind.el")
-
-(use-package symex
-  :straight
-  (symex :local-repo "~/programming/clones/symex.el" :type git)
-  :custom
-  (symex-modal-backend 'evil)
-  :config
-  (setq symex--user-evil-keyspec
-		'((":" . evil-ex)
-		  ("l" . evil-undo)
-		  
-		  ("h" . symex-go-down)
-		  ("n" . symex-go-forward)
-		  ("e" . symex-go-backward)
-		  ("i" . symex-go-up)
-
-		  ("C-e" . symex-leap-backward)
-		  ("C-n" . symex-leap-forward)
-		  
-		  ("H" . paredit-raise-sexp)
-		  ("N" . symex-shift-forward)
-		  ("E" . symex-shift-backward)
-		  ("I" . symex-wrap)
-
-		  ("w" . symex-traverse-forward)
-		  ("W" . symex-wrap)
-		  
-		  
-		  ("C-h" . symex-climb-branch)
-		  ("C-I" . symex-descend-branch)
-		  ("M-i" . symex-goto-highest)
-		  ("M-h" . symex-goto-lowest)
-		  ("M-n" . symex-evaluate)
-		  ("M-d" . cider-doc)
-		  ("M-N" . cider-eval-and-replace)
-		  ("D" . cider-eval-recalling)))
-  (symex-initialize)
-  (evil-define-key 'insert symex-mode-map
-	(kbd "<escape>") 'symex-mode-interface)
-
-  (evil-define-key 'normal symex-mode-map
-	(kbd "<escape>") 'symex-mode-interface))
+(defun cider-eval-recalling (&optional debug-it)
+  (interactive "P")
+  (let ((inline-debug (eq 16 (car-safe debug-it)))
+		(thing-to-send (concat "(clojure.test/run-test-var #'" (cider-symbol-at-point) ")") ) )
+	(cider-interactive-eval
+	 thing-to-send
+	 nil
+	 (cider-defun-at-point 'bounds)
+	 (cider--nrepl-pr-request-map))))
 
 
-
-
-
-
-
+;(load-file "~/programming/examplegarden/bind.el")
+										;
 (use-package cider)
 
 
@@ -327,22 +272,29 @@
   (require 'atomic-chrome)
   (atomic-chrome-start-server))
 
-(use-package copilot
-  :straight (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el"))
-  :ensure t
-  ;; :config
-  ;; (setq copilot-node-executable "/home/tommy/.nvm/versions/node/v17.9.1/bin/node")
-  )
-
 (with-eval-after-load 'company
   ;; disable inline previews
   (delq 'company-preview-if-just-one-frontend company-frontends))
 
-(define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
-(define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
+(with-eval-after-load 'evil
+  ;; Make , a prefix key in normal mode only
+  (define-prefix-command 'my-comma-map)
+  (evil-define-key 'normal 'global (kbd ",") 'my-comma-map)
 
-(byte-recompile-directory (expand-file-name "~/.emacs.d/straight/build/symex") 0)
-
-
-
+  ;; Now define the actual keybindings
+  (define-key my-comma-map (kbd "f") #'helm-find-files)
+  (define-key my-comma-map (kbd "b") #'helm-mini)
+  (define-key my-comma-map (kbd "k") #'helm-show-kill-ring)
+  (define-key my-comma-map (kbd "a") #'company-mode)
+  (define-key my-comma-map (kbd "\t") #'mode-line-other-buffer)
+  (define-key my-comma-map (kbd "v") #'er/expand-region)
+  (define-key my-comma-map (kbd "c") #'comment-region)
+  (define-key my-comma-map (kbd "r") #'revert-buffer-no-confirm)
+  (define-key my-comma-map (kbd "q") #'recompile)
+  (define-key my-comma-map (kbd "d") #'kill-this-buffer)
+  (define-key my-comma-map (kbd "g") #'helm-projectile-ag)
+  (define-key my-comma-map (kbd "e") #'string-edit-at-point)
+  (define-key my-comma-map (kbd "o") #'helm-occur)
+  (define-key my-comma-map (kbd "t") #'avy-goto-word-1)
+  (define-key my-comma-map (kbd "p") #'helm-projectile))
 
