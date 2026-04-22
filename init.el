@@ -298,3 +298,47 @@
   (define-key my-comma-map (kbd "t") #'avy-goto-word-1)
   (define-key my-comma-map (kbd "p") #'helm-projectile))
 
+
+(use-package symex
+  :straight
+  (symex :local-repo "~/programming/clones/symex.el" :type git)
+  :custom
+  (symex-modal-backend 'evil)
+  :config
+  (setq symex--user-evil-keyspec
+		'((":" . evil-ex)
+		  ("l" . evil-undo)
+		  
+		  ("h" . symex-go-down)
+		  ("n" . symex-go-forward)
+		  ("e" . symex-go-backward)
+		  ("i" . symex-go-up)
+
+		  ("C-e" . symex-leap-backward)
+		  ("C-n" . symex-leap-forward)
+		  
+		  ("H" . paredit-raise-sexp)
+		  ("N" . symex-shift-forward)
+		  ("E" . symex-shift-backward)
+		  ("I" . symex-wrap)
+
+		  ("w" . symex-traverse-forward)
+		  ("W" . symex-wrap)
+		  
+		  
+		  ("C-h" . symex-climb-branch)
+		  ("C-I" . symex-descend-branch)
+		  ("M-i" . symex-goto-highest)
+		  ("M-h" . symex-goto-lowest)
+		  ("M-n" . symex-evaluate)
+		  ("M-d" . cider-doc)
+		  ("M-N" . cider-eval-and-replace)
+		  ("D" . cider-eval-recalling)))
+  (symex-initialize)
+  (evil-define-key 'insert symex-mode-map
+	(kbd "<escape>") 'symex-mode-interface)
+
+  (evil-define-key 'normal symex-mode-map
+	(kbd "<escape>") 'symex-mode-interface))
+
+
