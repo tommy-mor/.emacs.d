@@ -1,3 +1,4 @@
+;;; init.el --- Tommy's Emacs config -*- lexical-binding: t -*-
 ;; https://github.crookster.org/switching-to-straight.el-from-emacs-26-builtin-package.el/
 ;; https://countvajhula.com/2020/12/27/turn-your-emacs-d-into-an-emacs-distribution-with-straight-el/
 
@@ -37,8 +38,12 @@
      map)))
 
 (defun revert-buffer-no-confirm ()
-  "Revert buffer without confirmation."
-  (interactive) (revert-buffer t t))
+  "Revert buffer from file without confirmation.
+Like a browser reload for the current file."
+  (interactive)
+  (if (buffer-file-name)
+      (revert-buffer t t)
+    (message "No file to reload for buffer %s" (buffer-name))))
 
 
 (use-package avy
@@ -82,12 +87,85 @@
   (setq helm-recentf-fuzzy-match t))
 
 (use-package helm-projectile)
-(use-package tree-sitter)
-(use-package tree-sitter-langs
-  :config
-  (add-to-list 'tree-sitter-load-path "/home/tommy/programming/brain/bin/")
-  (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+
+;; Compat: projectile 2.8 removed the ignore-list API that even latest
+;; helm-projectile still calls (upstream lag). Without this, ,g (ag),
+;; ack and grep all die with void-function. Rebuilt from the pieces
+;; that still exist: the globally-ignored defcustoms + the dirconfig
+;; struct. The `unless' makes it vanish once upstream catches up.
+(with-eval-after-load 'projectile
+  (unless (fboundp 'projectile-ignored-directories)
+    (defun projectile--compat-dirconfig-ignores ()
+      "Raw IGNORE entries from the current project's dirconfig, or nil."
+      (let ((cfg (projectile-parse-dirconfig-file)))
+        (and cfg (projectile-dirconfig-ignore cfg))))
+    (defun projectile--compat-project-ignored-files ()
+      "Project-ignored files (not directories), absolute paths."
+      (seq-remove #'file-directory-p
+                  (mapcar #'projectile-expand-root
+                          (projectile--compat-dirconfig-ignores))))
+    (defun projectile--compat-project-ignored-directories ()
+      "Project-ignored directories, absolute paths."
+      (seq-filter #'file-directory-p
+                  (mapcar #'projectile-expand-root
+                          (projectile--compat-dirconfig-ignores))))
+    (defun projectile-ignored-files ()
+      "Return list of ignored files (compat shim for helm-projectile)."
+      (seq-difference
+       (append projectile-globally-ignored-files
+               (projectile--compat-project-ignored-files))
+       projectile-globally-unignored-files
+       #'string=))
+    (defun projectile-ignored-directories ()
+      "Return list of ignored directories (compat shim for helm-projectile)."
+      (mapcar #'file-name-as-directory
+              (seq-difference
+               (append projectile-globally-ignored-directories
+                       (projectile--compat-project-ignored-directories))
+               projectile-globally-unignored-directories
+               #'string=)))
+    (defun projectile-ignored-files-rel ()
+      "Return list of ignored files, relative to the project root."
+      (projectile-make-relative-to-root (projectile-ignored-files)))
+    (defun projectile-ignored-directories-rel ()
+      "Return list of ignored directories, relative to the project root."
+      (projectile-make-relative-to-root (projectile-ignored-directories)))
+    (defun projectile-patterns-to-ignore ()
+      "Return a list of relative file patterns."
+      (seq-remove (lambda (pat) (string-prefix-p "/" pat))
+                  (projectile--compat-dirconfig-ignores)))))
+;; External tree-sitter (elisp-tree-sitter) is only for Emacs <29.
+;; On 29+, the built-in treesit replaces it -- and symex only uses builtin.
+(unless (fboundp 'treesit-available-p)
+  (use-package tree-sitter)
+  (use-package tree-sitter-langs
+    :config
+    (add-to-list 'tree-sitter-load-path "/home/tommy/programming/brain/bin/")
+    (global-tree-sitter-mode)
+    (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)))
+
+;; Symex tree-sitter support (Emacs 29+ only; inert on 28).
+;; Symex's TS backend is fully generic: once a parser is active in the
+;; buffer (`symex-ts-available-p'), all structural navigation/editing
+;; works with zero per-language config. Install e.g. the html grammar
+;; via M-x treesit-install-language-grammar, then symex works in
+;; html-ts-mode buffers out of the box.
+(when (fboundp 'treesit-available-p)
+  (require 'treesit)
+  ;; Grammar source recipes (Emacs 31 ships an empty list).
+  (add-to-list 'treesit-language-source-alist
+               '(html "https://github.com/tree-sitter/tree-sitter-html"))
+  (add-to-list 'treesit-language-source-alist
+               '(javascript "https://github.com/tree-sitter/tree-sitter-javascript"))
+  (add-to-list 'treesit-language-source-alist
+               '(css "https://github.com/tree-sitter/tree-sitter-css"))
+  (when (boundp 'major-mode-remap-alist)
+    ;; .html -> html-ts-mode (single parser: symex navigates the real
+    ;; tree). mhtml-ts-mode runs 3 parsers (js first), which confuses
+    ;; symex's default-parser assumption -- still available via M-x.
+    (add-to-list 'auto-mode-alist '("\\.html\\'" . html-ts-mode))
+    (add-to-list 'major-mode-remap-alist '(html-mode . html-ts-mode))
+    (add-to-list 'major-mode-remap-alist '(mhtml-mode . mhtml-ts-mode))))
 
 
 
@@ -265,6 +343,15 @@
    :repo "drym-org/symex.el"
    :files ("symex-core/symex*.el")))
 
+(defun my/symex-mode-interface-maybe ()
+  "Enter symex, unless in an HTML buffer.
+Unclosed tags break tree-sitter trees, so HTML gets plain
+evil (+ colemak) instead -- no symex, ever."
+  (interactive)
+  (if (derived-mode-p 'html-ts-mode 'mhtml-ts-mode 'html-mode 'mhtml-mode)
+      (message "symex off for html -- plain evil here")
+    (symex-mode-interface)))
+
 (use-package symex
   :after (symex-core)
   :straight
@@ -274,7 +361,7 @@
    :files ("symex/symex*.el" "symex/doc/*.texi" "symex/doc/figures"))
   :config
   (symex-mode 1)
-  (global-set-key (kbd "s-;") #'symex-mode-interface))
+  (global-set-key (kbd "s-;") #'my/symex-mode-interface-maybe))
 
 (use-package symex-ide
   :after (symex)
@@ -329,10 +416,15 @@
   (define-key symex-editing-mode-map (kbd "D") #'cider-eval-recalling))
 
 (with-eval-after-load 'evil
+  ;; Escape drops to normal state -- and, outside HTML buffers, into
+  ;; symex. HTML is symex-free (unclosed tags break the tree), so
+  ;; Escape there behaves like vanilla evil.
   (define-key evil-insert-state-map (kbd "<escape>")
     (lambda ()
       (interactive)
-      (if (bound-and-true-p symex-mode)
+      (if (and (bound-and-true-p symex-mode)
+               (not (derived-mode-p 'html-ts-mode 'mhtml-ts-mode
+                                    'html-mode 'mhtml-mode)))
           (symex-mode-interface)
         (evil-normal-state)))))
 
@@ -362,12 +454,10 @@
   ;; disable inline previews
   (delq 'company-preview-if-just-one-frontend company-frontends))
 
-(with-eval-after-load 'evil
-  ;; Make , a prefix key in normal mode only
+(defun my/setup-comma-leader ()
+  "Set up `,' as evil leader in normal/visual, with `,r' to reload."
   (define-prefix-command 'my-comma-map)
-  (evil-define-key 'normal 'global (kbd ",") 'my-comma-map)
-
-  ;; Now define the actual keybindings
+  (evil-define-key '(normal visual) 'global (kbd ",") 'my-comma-map)
   (define-key my-comma-map (kbd "f") #'helm-find-files)
   (define-key my-comma-map (kbd "b") #'helm-mini)
   (define-key my-comma-map (kbd "k") #'helm-show-kill-ring)
@@ -383,6 +473,13 @@
   (define-key my-comma-map (kbd "o") #'helm-occur)
   (define-key my-comma-map (kbd "t") #'avy-goto-word-1)
   (define-key my-comma-map (kbd "p") #'helm-projectile))
+
+(with-eval-after-load 'evil
+  ;; Make , a prefix key in normal/visual mode
+  (my/setup-comma-leader))
+;; In case evil already loaded (e.g. re-evaluating init):
+(when (featurep 'evil)
+  (my/setup-comma-leader))
 
 
 
